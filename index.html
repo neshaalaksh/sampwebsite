@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What's on your mind? — MICO</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;background:#130014;font-family:'Poppins',sans-serif;color:white;user-select:none;}
+
+/* WAVE BG */
+.wave-bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
+.wave-bg svg{width:100%;height:100%;}
+
+/* HEADER */
+.hdr{
+  position:fixed;top:0;left:0;right:0;z-index:10;
+  padding:1.6rem 2rem 0;display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.hdr h1{
+  font-family:'Bricolage Grotesque',sans-serif;font-weight:500;
+  font-size:clamp(1.4rem,2.8vw,2.3rem);letter-spacing:-0.02em;color:white;
+}
+.hdr h1 em{font-style:italic;color:#FF8E35;}
+.hdr p{font-size:13px;color:rgba(255,255,255,0.42);font-weight:300;font-family:'Poppins',sans-serif;}
+.tabs{
+  display:flex;gap:3px;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);border-radius:100px;padding:4px;margin-top:4px;
+}
+.tab{
+  padding:7px 17px;border-radius:100px;border:none;background:transparent;
+  color:rgba(255,255,255,0.42);font-family:'Poppins',sans-serif;font-size:12.5px;
+  cursor:pointer;transition:all 0.22s;
+}
+.tab.on{background:#FF8E35;color:#130014;font-weight:500;}
+.zone{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(255,142,53,0.12);color:#FF8E35;
+  border:1px solid rgba(255,142,53,0.3);
+  padding:5px 16px;border-radius:100px;font-size:12px;font-weight:500;
+  font-family:'Poppins',sans-serif;
+}
+
+/* SURFERS */
+.sf{
+  position:fixed;z-index:20;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  transition:transform 0.65s cubic-bezier(0.76,0,0.17,1), opacity 0.3s;
+  animation:bob 3.6s ease-in-out infinite;
+  transform-origin:50% 100%;
+}
+.sf:hover{filter:brightness(1.15);}
+.sf.sel{animation-play-state:paused;}
+.sf.dim{opacity:0.25;pointer-events:none;}
+@keyframes bob{0%,100%{margin-top:0}50%{margin-top:-8px}}
+
+.sf .lbl{
+  font-size:10px;font-weight:500;letter-spacing:0.05em;text-transform:uppercase;
+  color:rgba(255,255,255,0.48);white-space:nowrap;text-align:center;
+  max-width:88px;line-height:1.35;transition:color 0.3s;
+  font-family:'Poppins',sans-serif;
+}
+.sf.sel .lbl{color:#FF8E35;}
+
+/* hover tooltip */
+.sf::before{
+  content:attr(data-tip);
+  position:absolute;bottom:calc(100% + 9px);left:50%;
+  transform:translateX(-50%) translateY(6px);
+  background:#FF8E35;color:#130014;
+  font-size:10.5px;font-weight:600;padding:5px 12px;border-radius:100px;
+  white-space:nowrap;pointer-events:none;font-family:'Poppins',sans-serif;
+  opacity:0;transition:opacity 0.2s,transform 0.2s;
+}
+.sf::after{
+  content:'';position:absolute;bottom:calc(100% + 3px);left:50%;
+  transform:translateX(-50%) translateY(6px);
+  border:5px solid transparent;border-top-color:#FF8E35;
+  opacity:0;transition:opacity 0.2s,transform 0.2s;pointer-events:none;
+}
+.sf:hover::before,.sf:hover::after{opacity:1;transform:translateX(-50%) translateY(0);}
+.sf.sel::before,.sf.sel::after{display:none;}
+
+/* BOTTOM SHEET PANEL */
+.panel{
+  position:fixed;left:0;right:0;bottom:0;
+  height:210px;
+  background:#130014;
+  border-top:1px solid rgba(255,142,53,0.2);
+  z-index:50;
+  transform:translateY(100%);
+  transition:transform 0.5s cubic-bezier(0.76,0,0.17,1);
+  display:flex;flex-direction:column;
+  padding:1.2rem 1.8rem 1.2rem;
+  box-shadow:0 -20px 60px rgba(0,0,0,0.5);
+}
+.panel.open{transform:translateY(0);}
+
+/* orange top accent line */
+.panel::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#FF8E35,transparent);
+}
+
+.ptitle{
+  font-size:10px;letter-spacing:0.12em;text-transform:uppercase;
+  color:rgba(255,142,53,0.5);margin-bottom:10px;
+  font-family:'Poppins',sans-serif;
+}
+
+/* 3 slots horizontal + continue button */
+.panel-body{
+  flex:1;display:flex;align-items:center;gap:12px;
+}
+
+.slots{
+  flex:1;display:flex;gap:10px;
+}
+
+.slot{
+  flex:1;border:1px dashed rgba(255,142,53,0.2);border-radius:14px;
+  padding:12px 14px;min-height:80px;
+  display:flex;flex-direction:column;gap:6px;
+  transition:border-color 0.35s,background 0.35s;
+}
+.slot.on{
+  border-style:solid;border-color:rgba(255,142,53,0.45);
+  background:rgba(255,142,53,0.07);
+}
+.sn{
+  font-size:10px;letter-spacing:0.08em;text-transform:uppercase;
+  color:rgba(255,255,255,0.2);font-family:'Poppins',sans-serif;
+}
+.slot.on .sn{color:#FF8E35;font-weight:600;}
+.sname{
+  font-size:13px;font-weight:500;line-height:1.3;
+  font-family:'Bricolage Grotesque',sans-serif;color:white;
+}
+.sdesc{font-size:10.5px;color:rgba(255,255,255,0.4);line-height:1.45;font-family:'Poppins',sans-serif;}
+.slot-empty-txt{font-size:12px;color:rgba(255,255,255,0.14);font-family:'Poppins',sans-serif;}
+.srm{
+  background:none;border:none;color:rgba(255,255,255,0.2);
+  cursor:pointer;font-size:15px;align-self:flex-end;
+  transition:color 0.18s;margin-top:auto;padding:0;line-height:1;
+}
+.srm:hover{color:rgba(255,100,100,0.8);}
+
+/* Continue button (vertical, right side of panel) */
+.cbtn-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;}
+.cbtn{
+  padding:0;width:52px;height:52px;border-radius:50%;
+  border:1px solid rgba(255,142,53,0.25);
+  background:rgba(255,142,53,0.08);
+  color:rgba(255,142,53,0.4);
+  font-size:20px;cursor:not-allowed;
+  transition:all 0.3s;
+  display:flex;align-items:center;justify-content:center;
+}
+.cbtn.go{
+  background:#FF8E35;color:#130014;border-color:#FF8E35;
+  cursor:pointer;box-shadow:0 6px 24px rgba(255,142,53,0.35);
+}
+.cbtn.go:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(255,142,53,0.45);}
+.cbtn-lbl{font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.25);text-align:center;font-family:'Poppins',sans-serif;max-width:60px;line-height:1.4;}
+.cbtn.go + .cbtn-lbl{color:rgba(255,142,53,0.7);}
+
+/* reset */
+.rstlink{
+  font-size:10px;color:rgba(255,255,255,0.18);cursor:pointer;
+  transition:color 0.2s;text-align:center;margin-top:6px;
+  font-family:'Poppins',sans-serif;letter-spacing:0.04em;
+}
+.rstlink:hover{color:rgba(255,142,53,0.6);}
+
+/* count badge — shown above the panel */
+.cnt{
+  position:fixed;bottom:226px;left:50%;transform:translateX(-50%);
+  z-index:45;background:rgba(19,0,20,0.88);
+  border:1px solid rgba(255,142,53,0.25);border-radius:100px;
+  padding:7px 20px;font-size:11.5px;color:rgba(255,142,53,0.8);
+  opacity:0;transition:opacity 0.38s,bottom 0.5s cubic-bezier(0.76,0,0.17,1);
+  pointer-events:none;font-family:'Poppins',sans-serif;
+  backdrop-filter:blur(12px);
+}
+.cnt.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- WAVE — MICO brand: #130014 dark purple base, wave layers in brand purples -->
+<div class="wave-bg">
+<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="sg" cx="50%" cy="40%" r="65%">
+    <stop offset="0%" stop-color="#280438"/>
+    <stop offset="100%" stop-color="#130014"/>
+  </radialGradient>
+</defs>
+<rect width="100" height="100" fill="url(#sg)"/>
+
+<!-- subtle stars -->
+<g fill="white">
+<circle cx="7" cy="5" r="0.13" opacity="0.55"/><circle cx="19" cy="2.5" r="0.16" opacity="0.45"/>
+<circle cx="33" cy="7" r="0.11" opacity="0.5"/><circle cx="44" cy="1.8" r="0.14" opacity="0.55"/>
+<circle cx="58" cy="4.5" r="0.16" opacity="0.4"/><circle cx="71" cy="7.5" r="0.11" opacity="0.6"/>
+<circle cx="84" cy="2.2" r="0.14" opacity="0.5"/><circle cx="94" cy="5.5" r="0.16" opacity="0.45"/>
+<circle cx="13" cy="14" r="0.1" opacity="0.4"/><circle cx="27" cy="11" r="0.09" opacity="0.5"/>
+<circle cx="49" cy="13" r="0.12" opacity="0.45"/><circle cx="66" cy="15" r="0.1" opacity="0.5"/>
+<circle cx="77" cy="11" r="0.13" opacity="0.55"/><circle cx="89" cy="17" r="0.1" opacity="0.4"/>
+<circle cx="39" cy="21" r="0.09" opacity="0.45"/><circle cx="55" cy="24" r="0.11" opacity="0.4"/>
+</g>
+
+<!-- orange moon/glow — brand orange accent in sky -->
+<circle cx="83" cy="9" r="5" fill="rgba(255,142,53,0.04)"/>
+<circle cx="83" cy="9" r="2.8" fill="rgba(255,142,53,0.05)"/>
+<circle cx="83" cy="9" r="1.4" fill="rgba(255,142,53,0.08)"/>
+
+<!-- large bg surfer silhouette -->
+<g opacity="0.03" transform="translate(50,28) scale(0.28)">
+<ellipse cx="0" cy="48" rx="38" ry="9" fill="white"/>
+<rect x="-11" y="12" width="22" height="30" rx="11" fill="white"/>
+<circle cx="0" cy="3" r="14" fill="white"/>
+<line x1="-11" y1="24" x2="-56" y2="10" stroke="white" stroke-width="9" stroke-linecap="round"/>
+<line x1="11" y1="24" x2="56" y2="10" stroke="white" stroke-width="9" stroke-linecap="round"/>
+</g>
+
+<!-- Wave back — darkest purple -->
+<path d="M0,56 C3,56 9,45 15,46 C21,47 25,54 29,53 C34,52 38,40 42,41 C46,42 51,53 54,53 C58,53 63,47 66,47 C70,47 75,58 79,57 C83,56 88,50 91,51 C95,52 98,48 100,48 L100,100 L0,100Z"
+  fill="#1f0528" opacity="0.95"/>
+
+<!-- Wave mid — brand secondary purple #705A6F toned down -->
+<path d="M0,60 C4,60 10,49 16,50 C22,51 26,58 30,57 C35,56 39,44 43,45 C47,46 52,57 56,57 C60,57 65,51 68,51 C72,51 77,62 81,61 C85,60 90,54 93,55 C97,56 99,52 100,52 L100,100 L0,100Z"
+  fill="#2e0a3f" opacity="0.95"/>
+
+<!-- Wave front — matches surfer board positions -->
+<path d="M0,64 C3,64 9,53 15,54 C21,55 25,62 28,62 C33,62 37,50 39,50 C43,50 48,62 51,62 C55,62 60,56 63,56 C67,56 72,66 75,66 C79,66 84,59 87,59 C92,60 96,57 100,57 L100,100 L0,100Z"
+  fill="#3d1055"/>
+
+<!-- foam -->
+<path d="M0,64 C3,64 9,53 15,54 C21,55 25,62 28,62 C33,62 37,50 39,50 C43,50 48,62 51,62 C55,62 60,56 63,56 C67,56 72,66 75,66 C79,66 84,59 87,59 C92,60 96,57 100,57"
+  fill="none" stroke="rgba(255,142,53,0.08)" stroke-width="0.25"/>
+
+<!-- subtle orange shimmer on wave surface -->
+<path d="M35,52 C37,51 41,50 43,50 C45,50 47,51 49,52"
+  fill="none" stroke="rgba(255,142,53,0.15)" stroke-width="0.2" stroke-linecap="round"/>
+</svg>
+</div>
+
+<!-- HEADER -->
+<div class="hdr">
+  <h1>What's on your <em>mind?</em></h1>
+  <p>Pick up to 3 — we'll match you from there</p>
+  <div class="tabs">
+    <button class="tab on" onclick="swTab(this)">Myself</button>
+    <button class="tab" onclick="swTab(this)">My child</button>
+    <button class="tab" onclick="swTab(this)">My partner &amp; I</button>
+  </div>
+  <div class="zone">Zone 2 &nbsp;•&nbsp; ₹999 per session</div>
+</div>
+
+<!-- 8 SURFERS — each color-coded, positioned on wave crests -->
+
+<div class="sf" id="sf0" data-i="0" data-tip="Mood &amp; emotions"
+  style="left:4%;bottom:35%;animation-delay:0s;" onclick="tog(0)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#b89ae0" opacity="0.85"/>
+    <polygon points="41,63 47,73 36,67" fill="#705A6F"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#705A6F"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e8b88a"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#705A6F" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#705A6F" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Mood &amp;<br>emotions</span>
+</div>
+
+<div class="sf" id="sf1" data-i="1" data-tip="Anxiety &amp; stress"
+  style="left:16%;bottom:45%;animation-delay:-0.55s;" onclick="tog(1)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#FF8E35" opacity="0.7"/>
+    <polygon points="41,63 47,73 36,67" fill="#c86020"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#c86020"/>
+    <circle cx="28" cy="27" r="9.5" fill="#f0c88a"/>
+    <path d="M18,23 Q28,12 38,23" fill="#1a0a05"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#c86020" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#c86020" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Anxiety &amp;<br>stress</span>
+</div>
+
+<div class="sf" id="sf2" data-i="2" data-tip="Relationships &amp; family"
+  style="left:27%;bottom:37%;animation-delay:-1.1s;" onclick="tog(2)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#DDD0DD" opacity="0.75"/>
+    <polygon points="41,63 47,73 36,67" fill="#705A6F"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#8b4a70"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e8c090"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#8b4a70" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#8b4a70" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Relationships<br>&amp; family</span>
+</div>
+
+<div class="sf" id="sf3" data-i="3" data-tip="Trauma &amp; grief"
+  style="left:39%;bottom:49%;animation-delay:-1.65s;" onclick="tog(3)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#a0b0c8" opacity="0.8"/>
+    <polygon points="41,63 47,73 36,67" fill="#2a3860"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#2a3860"/>
+    <circle cx="28" cy="27" r="9.5" fill="#d4a574"/>
+    <path d="M18,23 Q28,12 38,23" fill="#1a0a05"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#2a3860" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#2a3860" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Trauma &amp;<br>grief</span>
+</div>
+
+<div class="sf" id="sf4" data-i="4" data-tip="Self &amp; identity"
+  style="left:51%;bottom:37%;animation-delay:-2.2s;" onclick="tog(4)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#FF8E35" opacity="0.55"/>
+    <polygon points="41,63 47,73 36,67" fill="#a05010"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#a05010"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e8b888"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#a05010" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#a05010" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Self &amp;<br>identity</span>
+</div>
+
+<div class="sf" id="sf5" data-i="5" data-tip="Work, focus &amp; habits"
+  style="left:63%;bottom:44%;animation-delay:-2.75s;" onclick="tog(5)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#DDD0DD" opacity="0.7"/>
+    <polygon points="41,63 47,73 36,67" fill="#4a2a5a"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#4a2a5a"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e0b080"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#4a2a5a" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#4a2a5a" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Work, focus<br>&amp; habits</span>
+</div>
+
+<div class="sf" id="sf6" data-i="6" data-tip="Body &amp; sleep"
+  style="left:75%;bottom:33%;animation-delay:-3.3s;" onclick="tog(6)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#b89ae0" opacity="0.7"/>
+    <polygon points="41,63 47,73 36,67" fill="#5a3880"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#5a3880"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e8b888"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#5a3880" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#5a3880" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">Body &amp;<br>sleep</span>
+</div>
+
+<div class="sf" id="sf7" data-i="7" data-tip="New chapters &amp; big changes"
+  style="left:87%;bottom:41%;animation-delay:-3.85s;" onclick="tog(7)">
+  <svg width="52" height="66" viewBox="0 0 56 72">
+    <ellipse cx="28" cy="63" rx="22" ry="5.5" fill="#FF8E35" opacity="0.5"/>
+    <polygon points="41,63 47,73 36,67" fill="#804020"/>
+    <line x1="33" y1="56" x2="39" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <line x1="23" y1="56" x2="18" y2="63" stroke="#1f0528" stroke-width="5.5" stroke-linecap="round"/>
+    <rect x="21" y="36" width="14" height="22" rx="7" fill="#804020"/>
+    <circle cx="28" cy="27" r="9.5" fill="#e8c898"/>
+    <path d="M18,23 Q28,12 38,23" fill="#2c1a10"/>
+    <line x1="21" y1="43" x2="3" y2="35" stroke="#804020" stroke-width="4.5" stroke-linecap="round"/>
+    <line x1="35" y1="43" x2="53" y2="35" stroke="#804020" stroke-width="4.5" stroke-linecap="round"/>
+  </svg>
+  <span class="lbl">New chapters<br>&amp; big changes</span>
+</div>
+
+<!-- BOTTOM SHEET PANEL -->
+<div class="panel" id="panel">
+  <div class="ptitle">Your concerns — pick up to 3</div>
+  <div class="panel-body">
+    <div class="slots">
+      <div class="slot" id="sl0"><div class="sn">01</div><div class="slot-empty-txt">Empty</div></div>
+      <div class="slot" id="sl1"><div class="sn">02</div><div class="slot-empty-txt">Empty</div></div>
+      <div class="slot" id="sl2"><div class="sn">03</div><div class="slot-empty-txt">Empty</div></div>
+    </div>
+    <div class="cbtn-wrap">
+      <button class="cbtn" id="cbtn">→</button>
+      <div class="cbtn-lbl" id="cbtn-lbl">Select one to continue</div>
+      <div class="rstlink" onclick="resetAll()">Start over</div>
+    </div>
+  </div>
+</div>
+
+<!-- count badge above panel -->
+<div class="cnt" id="cnt">0 of 3 selected</div>
+
+<script>
+const data = [
+  {name:"Mood & emotions",            desc:"When getting through the day feels heavier than it should"},
+  {name:"Anxiety & stress",           desc:"When your mind won't slow down and everything feels like too much"},
+  {name:"Relationships & family",     desc:"When the people closest to you are the hardest to navigate"},
+  {name:"Trauma & grief",             desc:"When something from the past or a loss is still weighing on you"},
+  {name:"Self & identity",            desc:"When you've lost sight of who you are or who you want to be"},
+  {name:"Work, focus & habits",       desc:"When work, habits or just keeping it together feels like a losing battle"},
+  {name:"Body & sleep",               desc:"When your body is sending signals that something isn't right"},
+  {name:"New chapters & big changes", desc:"When life has shifted and you're still trying to find your footing"},
+];
+
+let sel = [];
+const PANEL_H = 210;
+
+function freeSlot() {
+  const used = sel.map(s=>s.slotIdx);
+  for(let i=0;i<3;i++) if(!used.includes(i)) return i;
+  return -1;
+}
+
+// Target center of each slot in the bottom panel
+// Slot i center x: panel divided into 3 equal zones, cbtn-wrap ~90px wide
+// Panel full width, 3 slots fill remaining space
+// Approximate slot centers (will be close enough visually)
+function slotTarget(si) {
+  const panelRight = window.innerWidth - 110; // leave room for cbtn-wrap
+  const slotW = panelRight / 3;
+  return {
+    x: slotW * si + slotW / 2 + 28, // +28 for panel left padding
+    y: window.innerHeight - PANEL_H + 105  // center of slot area
+  };
+}
+
+function tog(i) {
+  const exists = sel.find(s=>s.i===i);
+  if(exists) desel(i);
+  else if(sel.length < 3) pick(i);
+}
+
+function pick(i) {
+  const si = freeSlot();
+  if(si === -1) return;
+  const el = document.getElementById('sf'+i);
+
+  // Open panel first
+  if(sel.length === 0) document.getElementById('panel').classList.add('open');
+
+  // Surfer current center
+  const r = el.getBoundingClientRect();
+  const fromX = r.left + r.width / 2;
+  const fromY = r.top + r.height / 2;
+
+  // Target: slot center in bottom panel
+  const t = slotTarget(si);
+  const dx = t.x - fromX;
+  const dy = t.y - fromY;
+
+  el.style.transform = `translate(${dx}px,${dy}px) scale(0.68)`;
+  el.style.zIndex = '60';
+  el.classList.add('sel');
+  el.style.animationPlayState = 'paused';
+
+  sel.push({i, slotIdx:si});
+  fillSlot(si, i);
+  sync();
+}
+
+function desel(i) {
+  const entry = sel.find(s=>s.i===i);
+  if(!entry) return;
+  const el = document.getElementById('sf'+i);
+  el.style.transform = '';
+  el.style.zIndex = '20';
+  el.classList.remove('sel');
+  el.style.animationPlayState = '';
+  sel = sel.filter(s=>s.i!==i);
+  emptySlot(entry.slotIdx);
+  if(sel.length === 0) document.getElementById('panel').classList.remove('open');
+  sync();
+}
+
+function fillSlot(si, i) {
+  const d = data[i];
+  const sl = document.getElementById('sl'+si);
+  sl.classList.add('on');
+  sl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div class="sn">0${si+1}</div>
+      <button class="srm" onclick="event.stopPropagation();desel(${i})" title="Remove">×</button>
+    </div>
+    <div class="sname">${d.name}</div>
+    <div class="sdesc">${d.desc}</div>`;
+}
+
+function emptySlot(si) {
+  const sl = document.getElementById('sl'+si);
+  sl.classList.remove('on');
+  sl.innerHTML = `<div class="sn">0${si+1}</div><div class="slot-empty-txt">Empty</div>`;
+}
+
+function sync() {
+  const n = sel.length;
+  document.querySelectorAll('.sf').forEach(el => {
+    const idx = parseInt(el.dataset.i);
+    el.classList.toggle('dim', n >= 3 && !sel.find(s=>s.i===idx));
+  });
+  // count badge
+  const c = document.getElementById('cnt');
+  c.textContent = `${n} of 3 selected`;
+  c.classList.toggle('show', n > 0);
+  // button
+  const btn = document.getElementById('cbtn');
+  const lbl = document.getElementById('cbtn-lbl');
+  if(n > 0){
+    btn.classList.add('go');
+    lbl.textContent = n === 1 ? 'Continue →' : `Continue (${n}) →`;
+    lbl.style.color = 'rgba(255,142,53,0.7)';
+  } else {
+    btn.classList.remove('go');
+    lbl.textContent = 'Select one to continue';
+    lbl.style.color = '';
+  }
+}
+
+function resetAll() {
+  [...sel].forEach(s=>desel(s.i));
+}
+
+function swTab(btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  resetAll();
+}
+</script>
+</body>
+</html>
